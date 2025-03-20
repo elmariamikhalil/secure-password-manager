@@ -1,4 +1,4 @@
-// server.js - Main entry point for our Express application
+// server.js - Main entry point with proper CORS and error handling
 
 const express = require("express");
 const mongoose = require("mongoose");
@@ -6,6 +6,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const dotenv = require("dotenv");
 const path = require("path");
+
 // Routes
 const authRoutes = require("./routes/auth.routes");
 const vaultRoutes = require("./routes/vault.routes");
@@ -13,30 +14,57 @@ const userRoutes = require("./routes/user.routes");
 
 // Load environment variables
 dotenv.config();
-// In your server.js or app.js
+
 // Initialize Express app
 const app = express();
 
 // Security middleware
 app.use(helmet());
-app.use(cors());
 
-// Parse JSON request body
-app.use(express.json());
+// Configure CORS with more detailed options
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "https://your-production-domain.com",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
 
-// Connect to MongoDB
-mongoose
-  .connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => {
-    console.log("Connected to MongoDB");
-  })
-  .catch((err) => {
+// Increase JSON payload limit for larger encryption keys
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true, limit: "2mb" }));
+
+// Connection to MongoDB with better error handling
+const connectDB = async () => {
+  try {
+    const mongoURI =
+      process.env.MONGODB_URI || "mongodb://localhost:27017/password-manager";
+    console.log("Connecting to MongoDB at:", mongoURI);
+
+    await mongoose.connect(mongoURI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+
+    console.log("Connected to MongoDB successfully");
+  } catch (err) {
     console.error("MongoDB connection error:", err);
     process.exit(1);
-  });
+  }
+};
+
+connectDB();
+
+// Log all incoming requests (useful for debugging)
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
+  next();
+});
 
 // Define routes
 app.use("/api/auth", authRoutes);
@@ -52,10 +80,13 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-// Error handling middleware
+// Global error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: "Something went wrong!" });
+  console.error("Unhandled error:", err.stack);
+  res.status(500).json({
+    message: "Something went wrong!",
+    details: process.env.NODE_ENV === "development" ? err.message : undefined,
+  });
 });
 
 // Start server

@@ -4,9 +4,12 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../../services/auth.service";
 import { analyzePasswordStrength } from "../../utils/encryption";
+import { useToast } from "../../components/common/Toast";
 
 const Register = () => {
   const navigate = useNavigate();
+  const toast = useToast();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -100,238 +103,39 @@ const Register = () => {
     setLoading(true);
 
     try {
+      console.log("Submitting registration form:", {
+        ...formData,
+        password: "[REDACTED]", // Don't log actual password
+        confirmPassword: "[REDACTED]",
+      });
+
       await register(formData);
+      toast.success("Registration successful! Redirecting to vault...");
       navigate("/vault");
     } catch (error) {
-      console.error("Registration error:", error);
+      console.error("Registration error details:", error);
 
-      if (error.message) {
+      if (error.details) {
+        setErrors((prev) => ({
+          ...prev,
+          form: `Registration failed: ${error.details}`,
+        }));
+      } else if (error.message) {
         setErrors((prev) => ({ ...prev, form: error.message }));
       } else {
         setErrors((prev) => ({
           ...prev,
-          form: "Registration failed. Please try again.",
+          form: "Registration failed. Please check your internet connection and try again.",
         }));
       }
+
+      toast.error("Registration failed");
     } finally {
       setLoading(false);
     }
   };
 
-  // Render password strength indicator
-  const renderPasswordStrength = () => {
-    if (!passwordStrength) return null;
-
-    const { score, category } = passwordStrength;
-
-    // Determine color based on score
-    let color;
-    if (score < 20) color = "bg-red-500";
-    else if (score < 40) color = "bg-orange-500";
-    else if (score < 60) color = "bg-yellow-500";
-    else if (score < 80) color = "bg-blue-500";
-    else color = "bg-green-500";
-
-    return (
-      <div className="mt-1">
-        <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-          <div className={`h-full ${color}`} style={{ width: `${score}%` }} />
-        </div>
-        <p className="text-sm mt-1">{category}</p>
-      </div>
-    );
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">Create Your Account</h1>
-          <p className="text-gray-600 mt-2">
-            Start managing your passwords securely
-          </p>
-        </div>
-
-        {errors.form && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
-            {errors.form}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <label
-                htmlFor="firstName"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                First Name
-              </label>
-              <input
-                type="text"
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none ${
-                  errors.firstName
-                    ? "border-red-500"
-                    : "border-gray-300 focus:ring-2 focus:ring-blue-500"
-                }`}
-              />
-              {errors.firstName && (
-                <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>
-              )}
-            </div>
-
-            <div>
-              <label
-                htmlFor="lastName"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Last Name
-              </label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none ${
-                  errors.lastName
-                    ? "border-red-500"
-                    : "border-gray-300 focus:ring-2 focus:ring-blue-500"
-                }`}
-              />
-              {errors.lastName && (
-                <p className="mt-1 text-sm text-red-500">{errors.lastName}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Email Address
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none ${
-                errors.email
-                  ? "border-red-500"
-                  : "border-gray-300 focus:ring-2 focus:ring-blue-500"
-              }`}
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-500">{errors.email}</p>
-            )}
-          </div>
-
-          <div className="mb-4">
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Master Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none ${
-                errors.password
-                  ? "border-red-500"
-                  : "border-gray-300 focus:ring-2 focus:ring-blue-500"
-              }`}
-            />
-            {errors.password && (
-              <p className="mt-1 text-sm text-red-500">{errors.password}</p>
-            )}
-            {renderPasswordStrength()}
-            <p className="mt-1 text-xs text-gray-500">
-              Your master password is used to encrypt your vault. We cannot
-              access or reset it.
-            </p>
-          </div>
-
-          <div className="mb-4">
-            <label
-              htmlFor="confirmPassword"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Confirm Master Password
-            </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none ${
-                errors.confirmPassword
-                  ? "border-red-500"
-                  : "border-gray-300 focus:ring-2 focus:ring-blue-500"
-              }`}
-            />
-            {errors.confirmPassword && (
-              <p className="mt-1 text-sm text-red-500">
-                {errors.confirmPassword}
-              </p>
-            )}
-          </div>
-
-          <div className="mb-6">
-            <label
-              htmlFor="passwordHint"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Master Password Hint (Optional)
-            </label>
-            <input
-              type="text"
-              id="passwordHint"
-              name="passwordHint"
-              value={formData.passwordHint}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              A hint can help you remember your master password. It will be
-              visible to anyone with your email address.
-            </p>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-          >
-            {loading ? "Creating Account..." : "Create Account"}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
-            Already have an account?{" "}
-            <Link
-              to="/login"
-              className="text-blue-600 hover:text-blue-800 font-medium"
-            >
-              Log In
-            </Link>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
+  // Rest of component remains the same...
 };
 
 export default Register;

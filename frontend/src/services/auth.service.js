@@ -39,35 +39,27 @@ api.interceptors.request.use(
  */
 export const register = async (userData) => {
   try {
+    console.log("Starting registration process");
     const { email, password, firstName, lastName, passwordHint } = userData;
 
     // Generate a random salt for key derivation
     const salt = generateSalt();
     const saltBase64 = arrayBufferToBase64(salt);
+    console.log("Generated salt successfully");
 
     // Number of iterations for key derivation
     const iterations = 100000;
 
     // Generate master password hash for authentication (using higher iterations)
+    console.log("Generating master password hash");
     const masterPasswordHash = await generateAuthHash(password, salt, 200000);
 
     // Derive encryption key (never sent to server)
+    console.log("Deriving encryption key");
     const encryptionKey = await deriveEncryptionKey(password, salt, iterations);
 
-    // Store encryption key in secure storage
-    // We use sessionStorage here so it's cleared when browser is closed
-    // In a real app, you might want a more sophisticated approach
-    const encryptionKeyExported = await window.crypto.subtle.exportKey(
-      "raw",
-      encryptionKey
-    );
-    sessionStorage.setItem(
-      "encryptionKey",
-      arrayBufferToBase64(encryptionKeyExported)
-    );
-
-    // Register user with backend
-    const response = await api.post("/auth/register", {
+    // Prepare registration data
+    const registrationData = {
       email,
       password, // This will be hashed again server-side (different from encryption key)
       firstName,
@@ -76,22 +68,62 @@ export const register = async (userData) => {
       masterPasswordHash,
       salt: saltBase64,
       iterations,
+    };
+
+    console.log("Sending registration request to server");
+    console.log("Registration payload:", {
+      ...registrationData,
+      password: "[REDACTED]", // Don't log the actual password
+      masterPasswordHash: "[REDACTED]", // Don't log the actual hash
     });
 
+    // Register user with backend
+    const response = await fetch(`${API_URL}/auth/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(registrationData),
+    });
+
+    const data = await response.json();
+    console.log("Registration response status:", response.status);
+
+    if (!response.ok) {
+      console.error("Registration failed:", data);
+      throw data;
+    }
+
+    console.log("Registration successful");
+
+    // Store encryption key in secure storage
+    // We use sessionStorage here so it's cleared when browser is closed
+    const encryptionKeyExported = await window.crypto.subtle.exportKey(
+      "raw",
+      encryptionKey
+    );
+    sessionStorage.setItem(
+      "encryptionKey",
+      arrayBufferToBase64(encryptionKeyExported)
+    );
+    console.log("Encryption key stored in session storage");
+
     // If registration successful, store auth token
-    if (response.data.token) {
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("refreshToken", response.data.refreshToken);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+    if (data.token) {
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("refreshToken", data.refreshToken);
+      localStorage.setItem("user", JSON.stringify(data.user));
 
       // Also store salt and iterations for later key derivation
       localStorage.setItem("salt", saltBase64);
       localStorage.setItem("iterations", iterations.toString());
+      console.log("Auth data stored in local storage");
     }
 
-    return response.data;
+    return data;
   } catch (error) {
-    throw error.response?.data || { message: "Registration failed" };
+    console.error("Registration error:", error);
+    throw error;
   }
 };
 
