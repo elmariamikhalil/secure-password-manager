@@ -27,7 +27,11 @@ app.use(
     origin: [
       "http://localhost:3000",
       "http://127.0.0.1:3000",
-      "https://your-production-domain.com",
+      "https://kael.es",
+      "https://www.kael.es",
+      "http://kael.es",
+      "http://www.kael.es",
+      "http://13.50.122.95",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
