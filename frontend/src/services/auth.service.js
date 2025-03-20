@@ -9,7 +9,7 @@ import {
 } from "../utils/encryption";
 
 // API base URL - should come from environment variables in a real app
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+const API_URL = process.env.REACT_APP_API_URL || "https://kael.es/api";
 
 // Create axios instance
 const api = axios.create({
