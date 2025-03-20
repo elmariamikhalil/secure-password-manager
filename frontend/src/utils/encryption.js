@@ -124,6 +124,157 @@ export async function generateAuthHash(
 }
 
 /**
+ * Encrypts data using AES-GCM
+ * @param {Object|string} data - Data to encrypt
+ * @param {CryptoKey} key - Encryption key
+ * @returns {Promise<string>} Base64-encoded encrypted data
+ */
+export async function encryptData(data, key) {
+  try {
+    // Check if Web Crypto API is available
+    if (!window.crypto || !window.crypto.subtle) {
+      throw new Error(
+        "Web Crypto API is not available. This application requires a secure context (HTTPS or localhost)."
+      );
+    }
+
+    // Convert data to string if it's an object
+    const dataString = typeof data === "object" ? JSON.stringify(data) : data;
+
+    // Convert string to buffer
+    const encoder = new TextEncoder();
+    const dataBuffer = encoder.encode(dataString);
+
+    // Generate random IV
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+
+    // Encrypt data
+    const encryptedBuffer = await window.crypto.subtle.encrypt(
+      {
+        name: "AES-GCM",
+        iv: iv,
+      },
+      key,
+      dataBuffer
+    );
+
+    // Combine IV and encrypted data
+    const combinedBuffer = new Uint8Array(
+      iv.length + encryptedBuffer.byteLength
+    );
+    combinedBuffer.set(iv, 0);
+    combinedBuffer.set(new Uint8Array(encryptedBuffer), iv.length);
+
+    // Convert to Base64
+    return arrayBufferToBase64(combinedBuffer);
+  } catch (error) {
+    console.error("Error encrypting data:", error);
+    throw error;
+  }
+}
+
+/**
+ * Decrypts data using AES-GCM
+ * @param {string} encryptedData - Base64-encoded encrypted data
+ * @param {CryptoKey} key - Decryption key
+ * @returns {Promise<Object|string>} Decrypted data
+ */
+export async function decryptData(encryptedData, key) {
+  try {
+    // Check if Web Crypto API is available
+    if (!window.crypto || !window.crypto.subtle) {
+      throw new Error(
+        "Web Crypto API is not available. This application requires a secure context (HTTPS or localhost)."
+      );
+    }
+
+    // Convert Base64 to buffer
+    const encryptedBuffer = base64ToArrayBuffer(encryptedData);
+
+    // Extract IV (first 12 bytes)
+    const iv = encryptedBuffer.slice(0, 12);
+
+    // Extract encrypted data (remaining bytes)
+    const dataBuffer = encryptedBuffer.slice(12);
+
+    // Decrypt data
+    const decryptedBuffer = await window.crypto.subtle.decrypt(
+      {
+        name: "AES-GCM",
+        iv: iv,
+      },
+      key,
+      dataBuffer
+    );
+
+    // Convert buffer to string
+    const decoder = new TextDecoder();
+    const decryptedString = decoder.decode(decryptedBuffer);
+
+    // Try to parse as JSON if possible
+    try {
+      return JSON.parse(decryptedString);
+    } catch (e) {
+      // Return as string if not valid JSON
+      return decryptedString;
+    }
+  } catch (error) {
+    console.error("Error decrypting data:", error);
+    throw error;
+  }
+}
+
+/**
+ * Generates a random password
+ * @param {number} length - Password length
+ * @param {boolean} includeUppercase - Include uppercase letters
+ * @param {boolean} includeLowercase - Include lowercase letters
+ * @param {boolean} includeNumbers - Include numbers
+ * @param {boolean} includeSymbols - Include symbols
+ * @returns {string} Generated password
+ */
+export function generatePassword(
+  length = 16,
+  includeUppercase = true,
+  includeLowercase = true,
+  includeNumbers = true,
+  includeSymbols = true
+) {
+  try {
+    const uppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
+    const numberChars = "0123456789";
+    const symbolChars = "!@#$%^&*()_+-=[]{}|;:,.<>?";
+
+    let availableChars = "";
+
+    if (includeUppercase) availableChars += uppercaseChars;
+    if (includeLowercase) availableChars += lowercaseChars;
+    if (includeNumbers) availableChars += numberChars;
+    if (includeSymbols) availableChars += symbolChars;
+
+    // Fallback if no character sets selected
+    if (availableChars.length === 0) {
+      availableChars = lowercaseChars + numberChars;
+    }
+
+    // Generate random values and map to characters
+    const randomValues = new Uint32Array(length);
+    window.crypto.getRandomValues(randomValues);
+
+    let password = "";
+    for (let i = 0; i < length; i++) {
+      password += availableChars[randomValues[i] % availableChars.length];
+    }
+
+    return password;
+  } catch (error) {
+    console.error("Error generating password:", error);
+    throw error;
+  }
+}
+
+/**
  * Analyzes password strength
  * @param {string} password - Password to analyze
  * @returns {Object} Password strength analysis
@@ -244,5 +395,7 @@ if (typeof window !== "undefined") {
     console.error(
       "window.crypto.subtle is not available. This might be because you're not running in a secure context (HTTPS or localhost)"
     );
+  } else {
+    console.log("Web Crypto API is available");
   }
 }
