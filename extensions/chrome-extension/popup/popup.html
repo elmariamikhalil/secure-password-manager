@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureVault</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">
+        <img src="../icons/icon48.png" alt="SecureVault Logo">
+        <h1>SecureVault</h1>
+      </div>
+      <div id="account-info" class="account-info hidden">
+        <p id="user-email"></p>
+      </div>
+    </div>
+
+    <!-- Login view -->
+    <div id="login-view" class="view">
+      <p class="message">Please log in to access your vault</p>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Master Password</label>
+          <input type="password" id="password" name="password" required>
+        </div>
+        <div id="login-error" class="error hidden"></div>
+        <button type="submit" class="btn btn-primary">Log In</button>
+      </form>
+      <div class="footer-link">
+        <a href="#" id="open-web-app">Open Web Application</a>
+      </div>
+    </div>
+
+    <!-- Loading view -->
+    <div id="loading-view" class="view hidden">
+      <div class="loader"></div>
+      <p>Loading your passwords...</p>
+    </div>
+
+    <!-- No credentials view -->
+    <div id="no-credentials-view" class="view hidden">
+      <p class="message">No saved credentials for this site</p>
+      <button id="add-password-btn" class="btn btn-primary">Add Password</button>
+      <div class="footer-actions">
+        <a href="#" id="view-all-btn">View All Passwords</a>
+        <a href="#" id="logout-btn" class="text-danger">Logout</a>
+      </div>
+    </div>
+
+    <!-- Credentials list view -->
+    <div id="credentials-view" class="view hidden">
+      <div class="site-info">
+        <img id="site-favicon" src="" alt="Site Icon">
+        <span id="site-domain"></span>
+      </div>
+      <div id="credentials-list" class="credentials-list"></div>
+      <div class="footer-actions">
+        <button id="add-credential-btn" class="btn btn-sm">Add New</button>
+        <a href="#" id="view-all-passwords-btn">View All</a>
+        <a href="#" id="logout-btn-2" class="text-danger">Logout</a>
+      </div>
+    </div>
+
+    <!-- Add/Edit credential view -->
+    <div id="add-edit-view" class="view hidden">
+      <h2 id="form-title">Add Password</h2>
+      <form id="credential-form">
+        <div class="form-group">
+          <label for="credential-url">URL</label>
+          <input type="text" id="credential-url" name="url" required>
+        </div>
+        <div class="form-group">
+          <label for="credential-username">Username / Email</label>
+          <input type="text" id="credential-username" name="username" required>
+        </div>
+        <div class="form-group">
+          <label for="credential-password">Password</label>
+          <div class="password-field">
+            <input type="password" id="credential-password" name="password" required>
+            <button type="button" id="toggle-password" class="btn-icon" title="Show password">
+              <i class="eye-icon"></i>
+            </button>
+            <button type="button" id="generate-password" class="btn-icon" title="Generate password">
+              <i class="generate-icon"></i>
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="credential-notes">Notes (Optional)</label>
+          <textarea id="credential-notes" name="notes" rows="2"></textarea>
+        </div>
+        <div id="form-error" class="error hidden"></div>
+        <div class="form-actions">
+          <button type="button" id="cancel-form-btn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
