@@ -6,7 +6,6 @@ const cors = require("cors");
 const helmet = require("helmet");
 const dotenv = require("dotenv");
 const path = require("path");
-
 // Routes
 const authRoutes = require("./routes/auth.routes");
 const vaultRoutes = require("./routes/vault.routes");
@@ -14,7 +13,7 @@ const userRoutes = require("./routes/user.routes");
 
 // Load environment variables
 dotenv.config();
-
+// In your server.js or app.js
 // Initialize Express app
 const app = express();
 
