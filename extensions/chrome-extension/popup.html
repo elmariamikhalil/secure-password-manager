@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SecureVault</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <!-- Login Container -->
+    <div id="login-container" class="hidden">
+      <div class="logo-container">
+        <img src="icons/logo.svg" alt="SecureVault Logo" class="logo" />
+      </div>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <div class="input-container">
+            <input type="email" id="email" name="email" required />
+            <button type="button" id="next-btn" class="primary-btn">
+              Next
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="master-password">Master Password</label>
+          <input
+            type="password"
+            id="master-password"
+            name="master-password"
+            required
+          />
+        </div>
+        <div class="remember-container">
+          <label class="checkbox-container">
+            <input type="checkbox" id="remember-email" />
+            <span class="checkmark"></span>
+            Remember Email
+          </label>
+        </div>
+        <button type="submit" class="primary-btn full-width">Log In</button>
+        <div class="login-links">
+          <a href="#" id="create-account-link">Create an Account</a>
+          <div class="dropdown">
+            <button type="button" id="need-help-btn" class="text-btn">
+              Need Help? <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="dropdown-content">
+              <a href="#">Forgot Email</a>
+              <a href="#">Forgot Master Password</a>
+              <a href="#">Contact Support</a>
+            </div>
+          </div>
+        </div>
+        <div class="login-footer">
+          <button
+            type="button"
+            id="enterprise-login-btn"
+            class="secondary-btn full-width"
+          >
+            Enterprise SSO Login <i class="fas fa-chevron-down"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Vault Container -->
+    <div id="vault-container">
+      <div class="header">
+        <div class="header-left">
+          <img src="icons/logo.svg" alt="SecureVault Logo" class="small-logo" />
+        </div>
+        <div class="header-actions">
+          <button id="add-new-btn" class="icon-btn" title="Add New">
+            <i class="fas fa-plus"></i>
+          </button>
+          <button
+            id="generate-password-btn"
+            class="icon-btn"
+            title="Generate Password"
+          >
+            <i class="fas fa-key"></i>
+          </button>
+          <button id="settings-btn" class="icon-btn" title="Settings">
+            <i class="fas fa-ellipsis-v"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="search-container">
+        <div class="search-input-container">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" id="search-input" placeholder="Search" />
+        </div>
+      </div>
+
+      <div class="records-header">
+        <span id="records-count">0 Suggested Records</span>
+      </div>
+
+      <div id="vault-items" class="vault-items-container">
+        <!-- Vault items will be populated here -->
+      </div>
+
+      <div class="footer">
+        <button id="logout-btn" class="text-btn">
+          <i class="fas fa-sign-out-alt"></i> Log Out
+        </button>
+      </div>
+    </div>
+
+    <!-- Password Generator Container -->
+    <div id="password-generator-container" class="hidden">
+      <div class="header">
+        <div class="header-left">
+          <button id="back-to-vault-btn" class="icon-btn" title="Back">
+            <i class="fas fa-arrow-left"></i>
+          </button>
+          <h1>Password Generator</h1>
+        </div>
+      </div>
+
+      <div class="generator-content">
+        <div class="password-display">
+          <input type="password" id="generated-password" readonly />
+          <div class="password-actions">
+            <button
+              id="show-password-btn"
+              class="icon-btn"
+              title="Show Password"
+            >
+              <i class="fas fa-eye"></i>
+            </button>
+            <button
+              id="copy-password-btn"
+              class="icon-btn"
+              title="Copy Password"
+            >
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="generator-options">
+          <div class="option-group">
+            <label for="password-length"
+              >Length: <span id="length-value">16</span></label
+            >
+            <input
+              type="range"
+              id="password-length"
+              min="8"
+              max="32"
+              value="16"
+            />
+          </div>
+
+          <div class="option-group">
+            <label class="checkbox-container">
+              <input type="checkbox" id="include-uppercase" checked />
+              <span class="checkmark"></span>
+              Uppercase Letters (A-Z)
+            </label>
+          </div>
+
+          <div class="option-group">
+            <label class="checkbox-container">
+              <input type="checkbox" id="include-lowercase" checked />
+              <span class="checkmark"></span>
+              Lowercase Letters (a-z)
+            </label>
+          </div>
+
+          <div class="option-group">
+            <label class="checkbox-container">
+              <input type="checkbox" id="include-numbers" checked />
+              <span class="checkmark"></span>
+              Numbers (0-9)
+            </label>
+          </div>
+
+          <div class="option-group">
+            <label class="checkbox-container">
+              <input type="checkbox" id="include-symbols" checked />
+              <span class="checkmark"></span>
+              Special Characters (!@#$%^&*)
+            </label>
+          </div>
+        </div>
+
+        <button id="generate-btn" class="primary-btn full-width">
+          Generate Password
+        </button>
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

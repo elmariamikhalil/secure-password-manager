@@ -1,4 +1,4 @@
-// frontend/src/components/vault/EnhancedVaultItem.js
+// src/components/vault/EnhancedVaultItem.js
 
 import React, { useState } from "react";
 import {
@@ -8,16 +8,16 @@ import {
   FaEdit,
   FaTrashAlt,
   FaShareAlt,
-  FaEllipsisV,
-  FaPen,
   FaExternalLinkAlt,
+  FaLock,
+  FaRegClock,
+  FaKey,
 } from "react-icons/fa";
 import { useToast } from "../common/Toast";
-import Avatar from "../common/Avatar";
 
 const EnhancedVaultItem = ({ item, onEdit, onDelete, onShare }) => {
   const [showPassword, setShowPassword] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
+  const [showTotpCode, setShowTotpCode] = useState(false);
   const [copied, setCopied] = useState(null);
   const toast = useToast();
 
@@ -31,6 +31,9 @@ const EnhancedVaultItem = ({ item, onEdit, onDelete, onShare }) => {
     itemType,
     createdAt,
     updatedAt,
+    authMethod,
+    totpSecret,
+    authDetails,
   } = item;
 
   // Extract domain from URL for display
@@ -70,13 +73,13 @@ const EnhancedVaultItem = ({ item, onEdit, onDelete, onShare }) => {
     setShowPassword(!showPassword);
   };
 
-  // Toggle action menu
-  const toggleMenu = () => {
-    setShowMenu(!showMenu);
+  // Toggle TOTP code visibility
+  const toggleShowTotpCode = () => {
+    setShowTotpCode(!showTotpCode);
   };
 
   // Get icon or first letter for the website
-  const getIcon = () => {
+  const getFavicon = () => {
     try {
       const domain = new URL(url).hostname;
       return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
@@ -108,173 +111,243 @@ const EnhancedVaultItem = ({ item, onEdit, onDelete, onShare }) => {
     }
   };
 
+  // Generate a TOTP code if we have a secret (in a real app, this would use the TOTP algorithm)
+  const generateTotpCode = () => {
+    // This is a placeholder - in a real app, you would use a TOTP library
+    if (!totpSecret) return null;
+
+    // Generate a fake 6-digit code
+    const fakeCode = Math.floor(100000 + Math.random() * 900000).toString();
+    // Group into 3-digit chunks for readability (like 123 456)
+    return `${fakeCode.substring(0, 3)} ${fakeCode.substring(3, 6)}`;
+  };
+
   // Get website name
   const websiteName = metadata?.name || getDomain(url);
 
+  // Get TOTP code if available
+  const totpCode = authMethod === "totp" ? generateTotpCode() : null;
+
   return (
-    <div className="card hover:border-primary-100 transition-all duration-300 mb-4 animate-fade-in">
-      <div className="flex items-start">
-        <div className="mr-4 flex-shrink-0">
-          <Avatar src={getIcon()} name={websiteName} size="lg" shape="square" />
-        </div>
+    <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 mb-4 overflow-hidden">
+      <div className="flex flex-col">
+        {/* Header section with website info */}
+        <div className="flex items-center p-4 border-b border-gray-100">
+          <div className="w-10 h-10 rounded-md bg-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden mr-3">
+            {getFavicon() ? (
+              <img
+                src={getFavicon()}
+                alt={websiteName}
+                className="w-full h-full object-contain"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src =
+                    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS1nbG9iZSI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiLz48cGF0aCBkPSJNMi4yMSAxMmExNSAxNSAwIDAgMSA3LjEtNy42Ii8+PHBhdGggZD0iTTEyIDE3LjhhMTUgMTUgMCAwIDEtOC4zNC0uMSIvPjxwYXRoIGQ9Ik0xMi4wMSA1LjVBMTUgMTUgMCAwIDEgMjAuMiAxMi4xNCIvPjxwYXRoIGQ9Ik0xMi4wMSAxOC41QTE1IDE1IDAgMCAxIDIwLjIgMTIuMTQiLz48cGF0aCBkPSJNMiAxMmg5Ii8+PHBhdGggZD0iTTEyIDJhMTAgMTAgMCAwIDEgOCAxNCIvPjwvc3ZnPg==";
+                }}
+              />
+            ) : (
+              <span className="text-gray-500 text-lg font-semibold">
+                {websiteName.charAt(0).toUpperCase()}
+              </span>
+            )}
+          </div>
 
-        <div className="flex-grow">
-          <div className="flex justify-between items-start">
-            <div>
-              <div className="flex items-center">
-                <h3 className="text-lg font-semibold text-dark-800">
-                  {websiteName}
-                </h3>
-                {item.metadata?.favorite && (
-                  <span className="ml-2 text-yellow-500">⭐</span>
-                )}
-              </div>
-              <p
-                className="text-sm text-dark-500 hover:text-primary-600 cursor-pointer flex items-center"
-                onClick={openWebsite}
-              >
-                {url}
-                <FaExternalLinkAlt className="ml-1 text-xs" />
-              </p>
-            </div>
-
-            <div className="flex items-center space-x-1">
-              <button
-                onClick={onEdit.bind(null, item)}
-                className="btn btn-icon btn-outline btn-sm text-dark-500 hover:text-primary-600"
-                title="Edit"
-              >
-                <FaEdit />
-              </button>
-              <button
-                onClick={onShare.bind(null, item)}
-                className="btn btn-icon btn-outline btn-sm text-dark-500 hover:text-primary-600"
-                title="Share"
-              >
-                <FaShareAlt />
-              </button>
-              <button
-                onClick={onDelete.bind(null, id)}
-                className="btn btn-icon btn-outline btn-sm text-dark-500 hover:text-danger-500"
-                title="Delete"
-              >
-                <FaTrashAlt />
-              </button>
-              <div className="relative">
-                <button
-                  onClick={toggleMenu}
-                  className="btn btn-icon btn-outline btn-sm text-dark-500 hover:text-dark-700"
-                  title="More options"
-                >
-                  <FaEllipsisV />
-                </button>
-
-                {showMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-10 animate-fade-in">
-                    <button
-                      onClick={() => {
-                        copyToClipboard(url, "URL");
-                        setShowMenu(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-dark-700 hover:bg-gray-100"
-                    >
-                      Copy URL
-                    </button>
-                    <button
-                      onClick={() => {
-                        copyToClipboard(username, "Username");
-                        setShowMenu(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-dark-700 hover:bg-gray-100"
-                    >
-                      Copy Username
-                    </button>
-                    <button
-                      onClick={() => {
-                        copyToClipboard(password, "Password");
-                        setShowMenu(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-dark-700 hover:bg-gray-100"
-                    >
-                      Copy Password
-                    </button>
-                    <button
-                      onClick={() => {
-                        openWebsite();
-                        setShowMenu(false);
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm text-dark-700 hover:bg-gray-100"
-                    >
-                      Visit Website
-                    </button>
-                  </div>
-                )}
-              </div>
+          <div className="flex-grow mr-4">
+            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+              {websiteName}
+              {metadata?.favorite && (
+                <span className="ml-2 text-yellow-500">⭐</span>
+              )}
+            </h3>
+            <div
+              className="text-sm text-blue-600 hover:text-blue-800 cursor-pointer flex items-center"
+              onClick={openWebsite}
+            >
+              {url}
+              <FaExternalLinkAlt className="ml-1 text-xs" />
             </div>
           </div>
 
-          <div className="mt-4 space-y-2">
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={() => onEdit(item)}
+              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+              title="Edit"
+            >
+              <FaEdit />
+            </button>
+            <button
+              onClick={() => onShare(item)}
+              className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-full transition-colors"
+              title="Share"
+            >
+              <FaShareAlt />
+            </button>
+            <button
+              onClick={() => onDelete(id)}
+              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+              title="Delete"
+            >
+              <FaTrashAlt />
+            </button>
+          </div>
+        </div>
+
+        {/* Credentials section */}
+        <div className="p-4">
+          <div className="space-y-3">
+            {/* Username field */}
             <div className="flex items-center justify-between">
-              <div className="w-1/4 text-sm text-dark-500 font-medium">
+              <div className="w-1/4 text-sm font-medium text-gray-600">
                 Username
               </div>
               <div className="w-3/4 flex items-center">
-                <span className="text-dark-800 mr-2 font-mono">{username}</span>
+                <span className="text-gray-800 mr-2 font-medium">
+                  {username}
+                </span>
                 <button
-                  onClick={() => copyToClipboard(username, "username")}
-                  className="text-dark-500 hover:text-primary-600"
+                  onClick={() => copyToClipboard(username, "Username")}
+                  className="text-gray-400 hover:text-blue-600 transition-colors"
                   title="Copy username"
                 >
                   <FaCopy />
                 </button>
-                {copied === "username" && (
-                  <span className="badge badge-success ml-1">Copied!</span>
+                {copied === "Username" && (
+                  <span className="ml-1 text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
+                    Copied
+                  </span>
                 )}
               </div>
             </div>
 
+            {/* Password field */}
             <div className="flex items-center justify-between">
-              <div className="w-1/4 text-sm text-dark-500 font-medium">
+              <div className="w-1/4 text-sm font-medium text-gray-600">
                 Password
               </div>
               <div className="w-3/4 flex items-center">
-                <span className="text-dark-800 mr-2 font-mono">
-                  {showPassword ? password : "••••••••••••"}
+                <span className="text-gray-800 mr-2 font-mono">
+                  {showPassword
+                    ? password
+                    : "•".repeat(Math.min(12, password.length))}
                 </span>
                 <button
                   onClick={toggleShowPassword}
-                  className="text-dark-500 hover:text-primary-600 mr-1"
+                  className="text-gray-400 hover:text-blue-600 transition-colors mr-1"
                   title={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
                 <button
-                  onClick={() => copyToClipboard(password, "password")}
-                  className="text-dark-500 hover:text-primary-600"
+                  onClick={() => copyToClipboard(password, "Password")}
+                  className="text-gray-400 hover:text-blue-600 transition-colors"
                   title="Copy password"
                 >
                   <FaCopy />
                 </button>
-                {copied === "password" && (
-                  <span className="badge badge-success ml-1">Copied!</span>
+                {copied === "Password" && (
+                  <span className="ml-1 text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
+                    Copied
+                  </span>
                 )}
               </div>
             </div>
 
+            {/* TOTP field (if available) */}
+            {authMethod === "totp" && totpCode && (
+              <div className="flex items-center justify-between">
+                <div className="w-1/4 text-sm font-medium text-gray-600">
+                  Verification Code
+                </div>
+                <div className="w-3/4 flex items-center">
+                  <div className="flex items-center bg-blue-50 px-2 py-1 rounded-md mr-2">
+                    <FaKey className="text-blue-600 mr-1.5 text-xs" />
+                    <span className="text-blue-800 font-mono font-medium">
+                      {showTotpCode ? totpCode : "••• •••"}
+                    </span>
+                  </div>
+                  <button
+                    onClick={toggleShowTotpCode}
+                    className="text-gray-400 hover:text-blue-600 transition-colors mr-1"
+                    title={showTotpCode ? "Hide code" : "Show code"}
+                  >
+                    {showTotpCode ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                  <button
+                    onClick={() =>
+                      copyToClipboard(
+                        totpCode.replace(" ", ""),
+                        "Verification code"
+                      )
+                    }
+                    className="text-gray-400 hover:text-blue-600 transition-colors"
+                    title="Copy verification code"
+                  >
+                    <FaCopy />
+                  </button>
+                  {copied === "Verification code" && (
+                    <span className="ml-1 text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
+                      Copied
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Other authentication methods */}
+            {authMethod && authMethod !== "none" && authMethod !== "totp" && (
+              <div className="flex items-center justify-between">
+                <div className="w-1/4 text-sm font-medium text-gray-600">
+                  Authentication
+                </div>
+                <div className="w-3/4 flex items-center">
+                  <div className="flex items-center bg-blue-50 px-2 py-1 rounded-md">
+                    <FaLock className="text-blue-600 mr-1.5 text-xs" />
+                    <span className="text-blue-800 text-sm">
+                      {authMethod === "sms"
+                        ? "SMS Authentication"
+                        : authMethod === "email"
+                        ? "Email Authentication"
+                        : authMethod === "push"
+                        ? "Push Notification"
+                        : authMethod === "hardware"
+                        ? "Hardware Key"
+                        : "Two-Factor Authentication"}
+                    </span>
+                  </div>
+                  {authDetails && (
+                    <span className="ml-2 text-sm text-gray-600">
+                      {authDetails}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Notes (if available) */}
             {notes && (
-              <div className="flex items-start justify-between">
-                <div className="w-1/4 text-sm text-dark-500 font-medium pt-1">
+              <div className="flex items-start justify-between mt-2">
+                <div className="w-1/4 text-sm font-medium text-gray-600 pt-1">
                   Notes
                 </div>
-                <div className="w-3/4 text-dark-800">
-                  <p className="whitespace-pre-wrap text-sm">{notes}</p>
+                <div className="w-3/4 text-gray-700">
+                  <p className="whitespace-pre-wrap text-sm bg-gray-50 p-2 rounded-md border border-gray-100">
+                    {notes}
+                  </p>
                 </div>
               </div>
             )}
           </div>
+        </div>
 
-          <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between text-xs text-dark-500">
+        {/* Footer with metadata */}
+        <div className="px-4 py-2 bg-gray-50 border-t border-gray-100 flex justify-between text-xs text-gray-500">
+          <div className="flex items-center">
+            <FaRegClock className="mr-1" />
             <span>Created: {formatDate(createdAt)}</span>
+          </div>
+          <div className="flex items-center">
+            <FaRegClock className="mr-1" />
             <span>Updated: {formatTimeAgo(updatedAt)}</span>
           </div>
         </div>
